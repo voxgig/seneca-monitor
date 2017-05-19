@@ -4,9 +4,9 @@
   "description": "seneca-monitor",
   "main": "monitor.js",
   "scripts": {
-    "test": "lab -P test -L -t 100",
+    "test": "lab -P test -L -t 90",
     "coveralls": "lab -s -P test -r lcov | coveralls",
-    "coverage": "lab -v -P test -L -t 100 -r html > docs/coverage.html",
+    "coverage": "lab -v -P test -L -t 90 -r html > docs/coverage.html",
     "hygiene": "prettier --write --no-semi --single-quote monitor.js test/*.js; docco monitor.js -o docs/annotated"
   },
   "repository": {

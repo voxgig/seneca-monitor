@@ -33,7 +33,90 @@
             <div class="content"><div class='highlight'><pre><span class="hljs-comment">/* Copyright (c) 2017 Richard Rodger and other contributors, MIT License */</span>
 <span class="hljs-meta">'use strict'</span>
 
-<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">monitor</span>(<span class="hljs-params"></span>) </span>{}</pre></div></div>
+<span class="hljs-keyword">var</span> Dgram = <span class="hljs-built_in">require</span>(<span class="hljs-string">'dgram'</span>)
+
+<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">monitor</span>(<span class="hljs-params">options</span>) </span>{
+  <span class="hljs-keyword">var</span> seneca = <span class="hljs-keyword">this</span>
+
+  <span class="hljs-keyword">var</span> ds = Dgram.createSocket(<span class="hljs-string">'udp4'</span>)
+  <span class="hljs-keyword">var</span> port = options.port || <span class="hljs-number">10111</span>
+  <span class="hljs-keyword">var</span> host = options.host || <span class="hljs-string">'0.0.0.0'</span>
+
+  <span class="hljs-keyword">var</span> spec = { <span class="hljs-attr">ds</span>: ds, <span class="hljs-attr">host</span>: host, <span class="hljs-attr">port</span>: port, <span class="hljs-attr">seneca</span>: seneca }
+
+  <span class="hljs-keyword">if</span> (options.collect) {
+    <span class="hljs-keyword">return</span> make_collector(spec)
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">return</span> make_monitor(spec)
+  }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">make_monitor</span>(<span class="hljs-params">spec</span>) </span>{
+  spec.seneca.on(<span class="hljs-string">'act-in'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">msg</span>) </span>{
+    <span class="hljs-keyword">var</span> m = msg.meta$
+    <span class="hljs-built_in">console</span>.log(m)
+
+    <span class="hljs-keyword">var</span> parents = m.parents || []
+    <span class="hljs-keyword">var</span> client = parents[parents.length - <span class="hljs-number">1</span>] || {}
+
+    <span class="hljs-keyword">var</span> desc = [
+      m.pattern,
+      m.id,
+      m.sync ? <span class="hljs-string">'s'</span> : <span class="hljs-string">'a'</span>,
+      m.start,
+      m.instance,
+      m.tag,
+      m.version,
+      m.parents.length,
+      client[<span class="hljs-number">0</span>],
+      client[<span class="hljs-number">2</span>]</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <p>TODO: needs tag and version</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    ].join(<span class="hljs-string">'~'</span>)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>console.log(desc)</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    send(spec, desc)
+  })
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">send</span>(<span class="hljs-params">spec, desc</span>) </span>{
+  <span class="hljs-keyword">var</span> data = <span class="hljs-keyword">new</span> Buffer(desc)
+  spec.ds.send(data, <span class="hljs-number">0</span>, data.length, spec.port, spec.host, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err</span>) </span>{
+    <span class="hljs-keyword">if</span> (err) spec.seneca.log.warn(err)
+  })
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">make_collector</span>(<span class="hljs-params">spec</span>) </span>{
+  spec.ds.on(<span class="hljs-string">'message'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">data</span>) </span>{
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'COLLECT'</span>, data.toString())
+  })
+
+  spec.ds.bind(spec.port, spec.host)
+}</pre></div></div>
             
         </li>
         
