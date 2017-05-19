@@ -1,0 +1,35 @@
+{
+  "name": "seneca-monitor",
+  "version": "0.0.1",
+  "description": "seneca-monitor",
+  "main": "monitor.js",
+  "scripts": {
+    "test": "lab -P test -L -t 100",
+    "coveralls": "lab -s -P test -r lcov | coveralls",
+    "coverage": "lab -v -P test -L -t 100 -r html > docs/coverage.html",
+    "hygiene": "prettier --write --no-semi --single-quote monitor.js test/*.js; docco monitor.js -o docs/annotated"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rjrodger/seneca-monitor.git"
+  },
+  "keywords": [
+    "seneca",
+    "microservice",
+    "monitor"
+  ],
+  "author": "Richard Rodger richardrodger.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rjrodger/seneca-monitor/issues"
+  },
+  "homepage": "https://github.com/rjrodger/seneca-monitor#readme",
+  "devDependencies": {
+    "code": "4.0.x",
+    "coveralls": "2.13.x",
+    "docco": "0.7.x",
+    "lab": "13.1.x",
+    "prettier": "1.3.x",
+    "seneca": "git://github.com/rjrodger/seneca.git"
+  }
+}
