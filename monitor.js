@@ -45,6 +45,7 @@ function make_monitor(spec) {
     }
 
     var desc = [
+      'M',
       m.pattern,
       m.id,
       m.instance,
@@ -61,9 +62,23 @@ function make_monitor(spec) {
 
     send(spec, desc)
   })
+
+  spec.seneca.add('role:seneca,cmd:close', function (msg, reply) {
+    var seneca = this
+    console.log('CLOSE')
+    send(spec,'D~'+spec.seneca.id)
+    setTimeout(function() {
+      spec.ds.close(function () {
+        spec.ds = null
+        seneca.prior(msg,reply)
+      })
+    },100)
+  })
 }
 
 function send(spec, desc) {
+  if (!spec.ds) return;
+
   var data = new Buffer(desc)
   spec.ds.send(data, 0, data.length, spec.opts.udp.port, spec.opts.udp.host, function(err) {
     if (err) spec.seneca.log.warn(err)
@@ -71,6 +86,8 @@ function send(spec, desc) {
 }
 
 function make_collector(spec) {
+  if (!spec.ds) return;
+
   spec.ds.on('message', function(data) {
     update(data.toString().split('~'))
   })
@@ -88,17 +105,47 @@ function make_collector(spec) {
 
   
   function update(data) {
-    var pattern = data[0]
-    var sync = data[5]
-    var start = data[6]
+    var cmd = data[0]
 
-    var rid = data[2]
-    var rtag = data[3]
-    var rver = data[4]
+    if( 'D' == cmd ) {
+      var did = data[1]
 
-    var sid = data[9]
-    var stag = data[10]
-    var sver = data[11]
+      Object.keys(map).forEach(function (kid) {
+        if(kid === did) {
+          delete map[did]
+          return
+        }
+        Object.keys(map[kid].in).forEach(function (pat) {
+          Object.keys(map[kid].in[pat]).forEach(function (mid) {
+            if(mid === did) {
+              delete map[kid].in[pat][did]
+            }
+          })
+        })
+        Object.keys(map[kid].out).forEach(function (pat) {
+          Object.keys(map[kid].out[pat]).forEach(function (mid) {
+            if(mid === did) {
+              delete map[kid].out[pat][did]
+            }
+          })
+        })
+      })
+      return
+    }
+
+    var o = 1
+
+    var pattern = data[o+0]
+    var sync = data[o+5]
+    var start = data[o+6]
+
+    var rid = data[o+2]
+    var rtag = data[o+3]
+    var rver = data[o+4]
+
+    var sid = data[o+9]
+    var stag = data[o+10]
+    var sver = data[o+11]
 
     if( '' === pattern || rid === sid ) {
       return

@@ -1,31 +1,15 @@
 
-var width = 1000,
-    height = 600;
+var opts = {
+  width: 1000,
+  height: 600
+}
 
-var svg = d3.select("body").append("svg")
-      .attr("width", width)
-      .attr("height", height);
-
-// Per-type markers, as they don't inherit styles.
-svg.append("defs").selectAll("marker")
-  .data(["async", "sync"])
-  .enter().append("marker")
-  .attr("id", function(d) { return d; })
-  .attr("viewBox", "0 -5 10 10")
-  .attr("refX", 8)
-  .attr("refY", 0)
-  .attr("markerWidth", 10)
-  .attr("markerHeight", 10)
-  .attr("orient", "auto")
-  .append("path")
-  .attr("d", function (d) { 
-    return "M1,-4 L9,0 L1,4 Z"; 
-  })
-
+var svg = build_svg(opts)
+var view = build_view(opts)
 
 //setInterval(get_map,1000)
 
-var view = build_view()
+
 
 function get_map() {
   fetch('/api/map')
@@ -33,40 +17,87 @@ function get_map() {
       return response.json()
     })
     .then(function(json) {
+      console.log(json)
       build_graph(json)
-      //console.log(graph)
       view.restart(view)
     })
 }
 
+var seen = {
+  nodes: {},
+  links: {},
+}
 
-var seen = {}
 function build_graph(data) {
   var nodes = view.nodes
   var links = view.links
 
+  var fresh = {
+    nodes:{},
+    links:{}
+  }
+
   Object.keys(data).forEach(function(src){
     Object.keys(data[src].in).forEach(function(msg){
       Object.keys(data[src].in[msg]).forEach(function(tar){
+        console.log('BG',src,tar)
 
-        if(!seen[src]) {
-          view.nodes.push({id:src})
-          seen[src] = 1
+        if(!seen.nodes[src]) {
+          console.log('NP',src)
+          nodes.push({id:src})
+          seen.nodes[src] = 1
+          fresh.nodes[src] = 1
         }
 
-        if(!seen[tar]) {
-          view.nodes.push({id:tar})
-          seen[tar] = 1
+        if(!seen.nodes[tar]) {
+          nodes.push({id:tar})
+          seen.nodes[tar] = 1
+          fresh.nodes[tar] = 1
         }
 
-        if(!seen[src+'~'+tar]) {
+        if(!seen.links[src+'~'+tar]) {
           links.push({
             source:src,
             target:tar,
             msg:msg,
             type:data[src].in[msg][tar].s==='s'?'sync':'async'
           })
-          seen[src+'~'+tar] = 1
+          seen.links[src+'~'+tar] = 1
+          fresh.links[src+'~'+tar] = 1
+        }
+
+/*
+        Object.keys(seen.links).forEach(function(link) {
+          if (!fresh.links[link]) {
+            delete seen.links[link]
+            links.splice(findLink(links,link),1)
+          }
+        })
+
+        Object.keys(seen.nodes).forEach(function(node) {
+          if (!fresh.nodes[node]) {
+            delete seen.nodes[node]
+            nodes.splice(findNode(nodes,node),1)
+          }
+        })
+*/
+        function findNode(nodes,id) {
+          for(var i = 0; i < nodes.length; i++) {
+            if( nodes[i].id === id ) {
+              return i
+            }
+          }
+          return -1
+        }
+
+        function findLink(links,srctar) {
+          var st = srctar.split('~')
+          for(var i = 0; i < links.length; i++) {
+            if( links[i].source.id === src && links[i].target.id === tar ) {
+              return i
+            }
+          }
+          return -1
         }
       })
     })
@@ -75,7 +106,7 @@ function build_graph(data) {
 
 
 
-function build_view() {
+function build_view(opts) {
 
   var hex_size = 32
   var node_dist = 40
@@ -87,7 +118,7 @@ function build_view() {
         .force("collide",d3.forceCollide( function(d){
           return hex_size + node_dist }).iterations(16) )
         .force("charge", d3.forceManyBody())
-        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("center", d3.forceCenter(opts.width / 2, opts.height / 2))
         .force("y", d3.forceY(0))
         .force("x", d3.forceX(0))
         //.alphaTarget(1)  
@@ -132,7 +163,6 @@ function build_view() {
     node = node.data(data.nodes, function(d) { return d.id;});
     node.exit().remove();
 
-
     node = node
       .enter().append("path")
       .attr("d", polygon(0,0,hex_size,6))
@@ -142,7 +172,6 @@ function build_view() {
             .on("start", dragstarted)
             .on("drag", dragged)
             .on("end", dragended))
-
 
     node_name = node_name.data(data.nodes, function(d) { return d.id;});
     node_name.exit().remove();
@@ -289,6 +318,33 @@ function build_view() {
     links: links
   }
 }
+
+
+function build_svg(opts) {
+  var svg = d3.select("body").append("svg")
+        .attr("width", opts.width)
+        .attr("height", opts.height);
+
+  // Per-type markers, as they don't inherit styles.
+  svg.append("defs").selectAll("marker")
+    .data(["async", "sync"])
+    .enter().append("marker")
+    .attr("id", function(d) { return d; })
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 8)
+    .attr("refY", 0)
+    .attr("markerWidth", 10)
+    .attr("markerHeight", 10)
+    .attr("orient", "auto")
+    .append("path")
+    .attr("d", function (d) { 
+      return "M1,-4 L9,0 L1,4 Z"; 
+    })
+
+  return svg
+}
+
+
 
 /*
 function build_view(graph) {
