@@ -3,14 +3,28 @@
 
 var Dgram = require('dgram')
 
+var Hapi = require('hapi')
+var Inert = require('inert')
+
 module.exports = function monitor(options) {
   var seneca = this
 
-  var ds = Dgram.createSocket('udp4')
-  var port = options.port || 10111
-  var host = options.host || '0.0.0.0'
+  var opts = this.util.deepextend({
+    udp: {
+      kind: 'udp4',
+      port: 10111,
+      host: '0.0.0.0'
+    },
+    web: {
+      port: 10181,
+      host: '0.0.0.0',
+      folder: __dirname
+    }
+  },options)
 
-  var spec = { ds: ds, host: host, port: port, seneca: seneca }
+  var ds = Dgram.createSocket(opts.udp.kind)
+
+  var spec = { ds: ds, seneca: seneca, opts:opts }
 
   if (options.collect) {
     return make_collector(spec)
@@ -51,7 +65,7 @@ function make_monitor(spec) {
 
 function send(spec, desc) {
   var data = new Buffer(desc)
-  spec.ds.send(data, 0, data.length, spec.port, spec.host, function(err) {
+  spec.ds.send(data, 0, data.length, spec.opts.udp.port, spec.opts.udp.host, function(err) {
     if (err) spec.seneca.log.warn(err)
   })
 }
@@ -60,13 +74,18 @@ function make_collector(spec) {
   spec.ds.on('message', function(data) {
     update(data.toString().split('~'))
   })
-  spec.ds.bind(spec.port, spec.host)
+  spec.ds.bind(spec.opts.udp.port, spec.opts.udp.host)
 
   var map = {}
+  spec.map = map
 
   spec.seneca.add('role:monitor,get:map', function (msg, reply) {
     reply(map)
   })
+
+  // TODO: should be plugin init
+  make_web(spec, console.log)
+
   
   function update(data) {
     var pattern = data[0]
@@ -85,7 +104,7 @@ function make_collector(spec) {
       return
     }
 
-
+/*
     console.log(
       'pattern', pattern,
       'sync', sync,
@@ -97,7 +116,7 @@ function make_collector(spec) {
       'stag', stag,
       'sver', sver
     )
-
+*/
 
 
     var r = (map[rid] = map[rid] || {in:{},out:{},tag:rtag}) 
@@ -124,3 +143,30 @@ function make_collector(spec) {
 }
 
 
+function make_web(spec, done) {
+  var server = new Hapi.Server()
+  server.connection({port: spec.opts.web.port, host:spec.opts.web.host})
+
+  server.register( Inert )
+
+  server.route({
+    method: 'GET',
+    path: '/{path*}',
+    handler: {
+      directory: {
+        path: spec.opts.web.folder + '/www',
+      }
+    }
+  })
+
+  server.route({ 
+    method: 'GET', path: '/api/map', 
+    handler: function( request, reply ) {
+      spec.seneca.act('role:monitor,get:map', function (err, out) {
+        reply(err||out||{})
+      })
+    }
+  })
+
+  server.start(done)      
+}
