@@ -44,6 +44,8 @@ function make_monitor(spec) {
       return
     }
 
+    console.log(m)
+
     var desc = [
       'M',
       m.pattern,
@@ -151,7 +153,7 @@ function make_collector(spec) {
       return
     }
 
-/*
+
     console.log(
       'pattern', pattern,
       'sync', sync,
@@ -163,7 +165,7 @@ function make_collector(spec) {
       'stag', stag,
       'sver', sver
     )
-*/
+
 
 
     var r = (map[rid] = map[rid] || {in:{},out:{},tag:rtag}) 

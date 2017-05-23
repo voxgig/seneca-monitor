@@ -15,6 +15,13 @@
   stroke-linejoin: miter;
 }
 
+#sync path {
+  fill: #666;
+  stroke: #666;
+  stroke-width: 1.3px;
+  stroke-linejoin: miter;
+}
+
 .link.async {
   stroke-dasharray: 0,2 1;
 }
@@ -52,6 +59,11 @@ text {
 
 </style>
 <body>
+<button onclick="set_view_mode('tag')" >tag</button>
+<button onclick="set_view_mode('instance')" >instance</button>
+<div id="graph">
 <script src="//d3js.org/d3.v4.min.js"></script>
 <script src="app.js"></script>
-</script>
+<div>
+</body>
+</html>

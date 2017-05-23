@@ -4,12 +4,13 @@ var s = require('seneca')({
   .test('print')
   .use('seneca-repl', {port:50100})
   .use('..')
-  .add('a:1')
+  .add('a:97')
   .listen(60100)
-  .client({pin:'b:1', port:60200})
+  .client({pin:'b:*', port:60200})
 
 
+//setTimeout(function() {
 setInterval(function() {
-  s.act('b:1')
-},1000)
+  s.act('b:97')
+},3000)
 

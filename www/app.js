@@ -1,15 +1,51 @@
 
 var opts = {
   width: 1000,
-  height: 600
+  height: 600,
+  //view_mode: 'instance',
+  view_mode: 'tag'
 }
+
 
 var svg = build_svg(opts)
 var view = build_view(opts)
 
+var base = {
+  nodes: view.nodes,
+  links: view.links,
+}
+
+for(var i = 0; i < 0; i++) {
+  base.nodes.push({id:'I'+i, fake:true})
+}
+
+
+function set_view_mode(mode) {
+  opts.view_mode = mode
+  base.nodes.splice(0,base.nodes.length)
+  base.links.splice(0,base.links.length)
+  get_map()
+}
+
+
+function refresh(data) {
+  var fresh = build_graph(data,opts)
+  //console.log(fresh)
+
+  //console.log('BN',JSON.stringify(base.nodes))
+  //console.log('BL',JSON.stringify(base.links))
+  var changed = merge_graph(fresh)
+  //console.log('MN',JSON.stringify(base.nodes))
+  //console.log('ML',JSON.stringify(base.links))
+  
+  if( changed ) {
+    view.restart(base)
+  }
+}
+
+
+
 //setInterval(get_map,1000)
-
-
 
 function get_map() {
   fetch('/api/map')
@@ -17,96 +53,175 @@ function get_map() {
       return response.json()
     })
     .then(function(json) {
-      console.log(json)
-      build_graph(json)
-      view.restart(view)
+      refresh(json)
     })
 }
 
-var seen = {
-  nodes: {},
-  links: {},
+
+
+function build_graph(data,opts) {
+  if(data) {
+    return build_graph['build_'+opts.view_mode](data)
+  }
+  else {
+    return {nodes:[],links:[]}
+  }
 }
 
-function build_graph(data) {
-  var nodes = view.nodes
-  var links = view.links
-
+build_graph.build_tag = function(data) {
   var fresh = {
+    nodes:[],
+    links:[]
+  }
+
+  var seen = {
     nodes:{},
     links:{}
   }
 
-  Object.keys(data).forEach(function(src){
-    Object.keys(data[src].in).forEach(function(msg){
-      Object.keys(data[src].in[msg]).forEach(function(tar){
-        console.log('BG',src,tar)
+  var inst = {}
 
-        if(!seen.nodes[src]) {
-          console.log('NP',src)
-          nodes.push({id:src})
-          seen.nodes[src] = 1
-          fresh.nodes[src] = 1
+  Object.keys(data).forEach(function(tar){
+    Object.keys(data[tar].in).forEach(function(msg){
+      Object.keys(data[tar].in[msg]).forEach(function(src){
+        var tartag = data[tar].tag
+        var srctag = data[tar].in[msg][src].t
+
+        if(!seen.nodes[tartag]) {
+          fresh.nodes.push({id:tartag})
+          seen.nodes[tartag] = 1
         }
 
-        if(!seen.nodes[tar]) {
-          nodes.push({id:tar})
-          seen.nodes[tar] = 1
-          fresh.nodes[tar] = 1
+        if(!seen.nodes[srctag]) {
+          fresh.nodes.push({id:srctag})
+          seen.nodes[srctag] = 1
         }
 
-        if(!seen.links[src+'~'+tar]) {
-          links.push({
-            source:src,
-            target:tar,
+        inst[tartag] = (inst[tartag] || {})
+        inst[tartag][tar] = 1
+
+        inst[srctag] = (inst[srctag] || {})
+        inst[srctag][src] = 1
+
+        if(!seen.links[tartag+'~'+srctag]) {
+          fresh.links.push({
+            target:tartag,
+            source:srctag,
             msg:msg,
-            type:data[src].in[msg][tar].s==='s'?'sync':'async'
+            type:data[tar].in[msg][src].s==='s'?'sync':'async'
           })
-          seen.links[src+'~'+tar] = 1
-          fresh.links[src+'~'+tar] = 1
-        }
-
-/*
-        Object.keys(seen.links).forEach(function(link) {
-          if (!fresh.links[link]) {
-            delete seen.links[link]
-            links.splice(findLink(links,link),1)
-          }
-        })
-
-        Object.keys(seen.nodes).forEach(function(node) {
-          if (!fresh.nodes[node]) {
-            delete seen.nodes[node]
-            nodes.splice(findNode(nodes,node),1)
-          }
-        })
-*/
-        function findNode(nodes,id) {
-          for(var i = 0; i < nodes.length; i++) {
-            if( nodes[i].id === id ) {
-              return i
-            }
-          }
-          return -1
-        }
-
-        function findLink(links,srctar) {
-          var st = srctar.split('~')
-          for(var i = 0; i < links.length; i++) {
-            if( links[i].source.id === src && links[i].target.id === tar ) {
-              return i
-            }
-          }
-          return -1
+          seen.links[tartag+'~'+srctag] = 1
         }
       })
     })
   })
+
+  fresh.nodes.forEach(function (n){
+    n.count = Object.keys(inst[n.id]).length 
+  })
+
+  return fresh
+}
+
+build_graph.build_instance = function(data) {
+  var fresh = {
+    nodes:[],
+    links:[]
+  }
+
+  var seen = {
+    nodes:{},
+    links:{}
+  }
+
+  Object.keys(data).forEach(function(tar){
+    Object.keys(data[tar].in).forEach(function(msg){
+      Object.keys(data[tar].in[msg]).forEach(function(src){
+        if(!seen.nodes[tar]) {
+          fresh.nodes.push({id:tar})
+          seen.nodes[tar] = 1
+        }
+
+        if(!seen.nodes[src]) {
+          fresh.nodes.push({id:src})
+          seen.nodes[src] = 1
+
+        }
+
+        if(!seen.links[tar+'~'+src]) {
+          fresh.links.push({
+            target:tar,
+            source:src,
+            msg:msg,
+            type:data[tar].in[msg][src].s==='s'?'sync':'async'
+          })
+          seen.links[tar+'~'+src] = 1
+        }
+      })
+    })
+  })
+
+  return fresh
 }
 
 
+function merge_graph(fresh) {
+  var changed = false
+
+  function link_eq(bl,fl) { 
+    return (bl.source === fl.source || bl.source.id === fl.source) && 
+        (bl.target === fl.target || bl.target.id === fl.target) &&
+        bl.msg === fl.msg
+  }
+
+  function node_eq(bn,fn){ 
+    return bn.id === fn.id
+  }
+  
+
+  fresh.nodes.forEach(function (fn) {
+    if(!base.nodes.find(function(bn){return node_eq(bn,fn)})) {
+      base.nodes.push(fn)
+      changed = true
+    }
+  })
+
+  fresh.links.forEach(function (fl) {
+    if(!base.links.find(function(bl){return link_eq(bl,fl)})) {
+      base.links.push(fl)
+      changed = true
+    }
+  })
+
+  for( var i = 0; i < base.nodes.length; i++) {
+    var bn = base.nodes[i]
+    if(!bn.fake && !fresh.nodes.find(function(fn){return node_eq(bn,fn)})) {
+      base.nodes.splice(i,1)
+      i--
+      changed = true
+    }
+  }
+
+  for( var i = 0; i < base.links.length; i++) {
+    var bl = base.links[i]
+    if(!fresh.links.find(function(fl){return link_eq(bl,fl)})) {
+      base.links.splice(i,1)
+      i--
+      changed = true
+    }
+  }  
+
+  return changed
+}
+
 
 function build_view(opts) {
+/*
+  return {
+    nodes:[],
+    links:[]
+  }
+*/
 
   var hex_size = 32
   var node_dist = 40
@@ -114,9 +229,12 @@ function build_view(opts) {
   var links = []
 
   var simulation = d3.forceSimulation()
-        .force("link", d3.forceLink(links).id(function(d) { return d.id }))
+        .force("link", d3.forceLink(links)
+               .id(function(d) { return d.id })
+               //.distance(120)
+              )
         .force("collide",d3.forceCollide( function(d){
-          return hex_size + node_dist }).iterations(16) )
+          return hex_size + node_dist }).iterations(16))
         .force("charge", d3.forceManyBody())
         .force("center", d3.forceCenter(opts.width / 2, opts.height / 2))
         .force("y", d3.forceY(0))
@@ -144,7 +262,10 @@ function build_view(opts) {
         .attr("class", "node_name_group")
         .selectAll("text")
 
-  
+  var node_count = svg.append("g")
+        .attr("class", "node_count_group")
+        .selectAll("text")
+
   
   function ticked() {
     link.attr("d", linkArc);
@@ -155,6 +276,7 @@ function build_view(opts) {
     
     node.attr("transform", transform)
     node_name.attr("transform", transform)
+    node_count.attr("transform", transform)
     node_bg.attr("transform", transform)
   }  
   
@@ -180,6 +302,19 @@ function build_view(opts) {
       .attr("y", ".31em")
       .text(function(d) { return d.id; })
       .merge(node_name)
+
+    node_count = node_count.data(data.nodes, function(d) { return d.id;});
+    node_count.exit().remove();
+    node_count = node_count
+      .enter().append("text")
+      .attr("y", "-1em")
+      .text(function(d) { 
+        if( 'tag' === opts.view_mode ) {
+          return '{'+(d.count||0)+'}'
+        }
+        else return ''
+      })
+      .merge(node_count)
 
     node_bg = node_bg.data(data.nodes, function(d) { return d.id;});
     node_bg.exit().remove();
@@ -214,7 +349,7 @@ function build_view(opts) {
 
     simulation.nodes(data.nodes);
     simulation.force("link").links(data.links);
-    simulation.alpha(1).restart();
+    simulation.alpha(0.1).restart();
   }
 
   
@@ -321,7 +456,8 @@ function build_view(opts) {
 
 
 function build_svg(opts) {
-  var svg = d3.select("body").append("svg")
+  var svg = d3.select("#graph")
+        .append("svg")
         .attr("width", opts.width)
         .attr("height", opts.height);
 
@@ -391,7 +527,6 @@ function build_view(graph) {
         .attr("class", function(d) { return "link " + d.type; })
         .attr("marker-end", function(d) { return "url(#" + d.type + ")"; })
 
-  console.log(path)
 
   var msg = svg.append("g").selectAll("text")
         .data(force.links())
