@@ -2,7 +2,6 @@
 var opts = {
   width: 1000,
   height: 600,
-  //view_mode: 'instance',
   view_mode: 'tag'
 }
 
@@ -15,6 +14,11 @@ var base = {
   links: view.links,
 }
 
+var base_instances = {
+  nodes: [],
+  links: []
+}
+
 for(var i = 0; i < 0; i++) {
   base.nodes.push({id:'I'+i, fake:true})
 }
@@ -24,21 +28,20 @@ function set_view_mode(mode) {
   opts.view_mode = mode
   base.nodes.splice(0,base.nodes.length)
   base.links.splice(0,base.links.length)
+  base_instances.nodes.splice(0,base_instances.nodes.length)
+  base_instances.links.splice(0,base_instances.links.length)
   get_map()
 }
 
 
 function refresh(data) {
-  var fresh = build_graph(data,opts)
-  //console.log(fresh)
+  var fresh_instances = build_graph(data,{view_mode:'instance'})
+  var changed = merge_graph(fresh_instances,base_instances)
 
-  //console.log('BN',JSON.stringify(base.nodes))
-  //console.log('BL',JSON.stringify(base.links))
-  var changed = merge_graph(fresh)
-  //console.log('MN',JSON.stringify(base.nodes))
-  //console.log('ML',JSON.stringify(base.links))
-  
   if( changed ) {
+    var fresh = build_graph(data,opts)    
+    merge_graph(fresh, base)
+
     view.restart(base)
   }
 }
@@ -165,7 +168,7 @@ build_graph.build_instance = function(data) {
 }
 
 
-function merge_graph(fresh) {
+function merge_graph(fresh,base) {
   var changed = false
 
   function link_eq(bl,fl) { 

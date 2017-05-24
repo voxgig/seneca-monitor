@@ -38,7 +38,7 @@ function make_monitor(spec) {
     var m = msg.meta$
 
     var parents = m.parents || []
-    var client = parents[parents.length - 1]
+    var client = parents[0]
 
     if (!client) {
       return
@@ -76,6 +76,7 @@ function make_monitor(spec) {
       })
     },100)
   })
+
 }
 
 function send(spec, desc) {
@@ -100,6 +101,11 @@ function make_collector(spec) {
 
   spec.seneca.add('role:monitor,get:map', function (msg, reply) {
     reply(map)
+  })
+
+  spec.seneca.add('role:monitor,cmd:update', function (msg, reply) {
+    update(msg.data||[])
+    reply()
   })
 
   // TODO: should be plugin init
