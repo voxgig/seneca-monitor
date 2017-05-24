@@ -45,7 +45,7 @@ function refresh(data) {
 
 
 
-//setInterval(get_map,1000)
+setInterval(get_map,1000)
 
 function get_map() {
   fetch('/api/map')

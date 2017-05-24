@@ -44,7 +44,7 @@ function make_monitor(spec) {
       return
     }
 
-    console.log(m)
+    // console.log(m)
 
     var desc = [
       'M',
@@ -67,7 +67,7 @@ function make_monitor(spec) {
 
   spec.seneca.add('role:seneca,cmd:close', function (msg, reply) {
     var seneca = this
-    console.log('CLOSE')
+    //console.log('CLOSE')
     send(spec,'D~'+spec.seneca.id)
     setTimeout(function() {
       spec.ds.close(function () {
@@ -138,6 +138,11 @@ function make_collector(spec) {
     var o = 1
 
     var pattern = data[o+0]
+
+    if (-1 != pattern.indexOf('role:seneca')) {
+      return
+    }
+
     var sync = data[o+5]
     var start = data[o+6]
 
@@ -154,6 +159,7 @@ function make_collector(spec) {
     }
 
 
+    /*
     console.log(
       'pattern', pattern,
       'sync', sync,
@@ -165,7 +171,7 @@ function make_collector(spec) {
       'stag', stag,
       'sver', sver
     )
-
+     */
 
 
     var r = (map[rid] = map[rid] || {in:{},out:{},tag:rtag}) 
