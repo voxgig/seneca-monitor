@@ -106,15 +106,18 @@ build_graph.build_tag = function(data) {
         inst[srctag] = (inst[srctag] || {})
         inst[srctag][src] = 1
 
-        if(!seen.links[tartag+'~'+srctag]) {
-          fresh.links.push({
-            target:tartag,
-            source:srctag,
-            msg:msg,
-            type:data[tar].in[msg][src].s==='s'?'sync':'async'
-          })
-          seen.links[tartag+'~'+srctag] = 1
-        }
+
+        seen.links[tartag+'~'+srctag] = (seen.links[tartag+'~'+srctag] || 1)
+
+        fresh.links.push({
+          target:tartag,
+          source:srctag,
+          msg:msg,
+          count: seen.links[tartag+'~'+srctag],
+          type:data[tar].in[msg][src].s==='s'?'sync':'async'
+        })
+
+        seen.links[tartag+'~'+srctag] += 1
       })
     })
   })
@@ -389,10 +392,11 @@ function build_view(opts) {
 
   function msg_center(axis) {
     return function (d) {
+      var bend = 1/(d.count/2)
       var bc = box_center(document.getElementById(link_id(d))),
           dx = d.target.x - d.source.x,
           dy = d.target.y - d.source.y,
-          dr = Math.sqrt(dx * dx + dy * dy),
+          dr = bend*Math.sqrt(dx * dx + dy * dy),
           o = dr/10,
           t = (Math.PI/2 - theta(d)),
           dx = d.target.x - d.source.x
@@ -411,10 +415,11 @@ function build_view(opts) {
   }
 
   function linkArc(d) {
+    var bend = 1/d.count
     var o = 36,
         dx = d.target.x - d.source.x,
         dy = d.target.y - d.source.y,
-        dr = Math.sqrt(dx * dx + dy * dy),
+        dr = bend*Math.sqrt(dx * dx + dy * dy),
         os = 12,
         theta = Math.atan(dy/dx),
 
