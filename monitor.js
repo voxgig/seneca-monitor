@@ -170,19 +170,7 @@ function make_collector(spec) {
       return
     }
 
-    /*
-    console.log(
-      'pattern', pattern,
-      'sync', sync,
-      'start', start,
-      'rid', rid,
-      'rtag', rtag,
-      'rver', rver,
-      'sid', sid,
-      'stag', stag,
-      'sver', sver
-    )
-     */
+    // TODO: see seneca-component for an updated version and better names
 
     var r = (map[rid] = map[rid] || { in: {}, out: {}, tag: rtag })
     var s = (map[sid] = map[sid] || { in: {}, out: {}, tag: stag })
