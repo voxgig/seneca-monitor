@@ -1,6 +1,6 @@
 {
   "name": "seneca-monitor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "seneca-monitor",
   "main": "monitor.js",
   "scripts": {
@@ -35,5 +35,10 @@
   "dependencies": {
     "hapi": "16.6",
     "inert": "4.2"
-  }
+  },
+  "files":[
+    "LICENSE",
+    "README.md",
+    "monitor.js"
+  ]
 }
