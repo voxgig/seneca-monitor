@@ -1,6 +1,6 @@
 {
   "name": "seneca-monitor",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "seneca-monitor",
   "main": "monitor.js",
   "scripts": {
@@ -39,6 +39,7 @@
   "files":[
     "LICENSE",
     "README.md",
-    "monitor.js"
+    "monitor.js",
+    "www"
   ]
 }
