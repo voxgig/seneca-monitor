@@ -1,13 +1,17 @@
 {
   "name": "seneca-monitor",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "seneca-monitor",
   "main": "monitor.js",
   "scripts": {
-    "test": "lab -P test -L -t 75",
+    "test": "lab -P test -t 75",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "coverage": "lab -v -P test -L -t 75 -r html > docs/coverage.html",
-    "prettier": "prettier --write --no-semi --single-quote monitor.js test/*.js"
+    "prettier": "prettier --write --no-semi --single-quote monitor.js test/*.js",
+    "clean-npm": "rm -rf node_modules package-lock.json",
+    "clean-yarn": "rm -rf node_modules yarn.lock",
+    "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
+    "repo-publish": "npm test && npm run repo-tag && npm publish"
   },
   "repository": {
     "type": "git",
@@ -25,18 +29,18 @@
   },
   "homepage": "https://github.com/rjrodger/seneca-monitor#readme",
   "devDependencies": {
-    "code": "4",
+    "code": "5",
     "coveralls": "3",
-    "lab": "14",
+    "lab": "18",
     "prettier": "1",
-    "seneca": "plugin",
+    "seneca": "senecajs/seneca",
     "seneca-repl": "1"
   },
   "dependencies": {
-    "hapi": "16.6",
-    "inert": "4.2"
+    "hapi": "17",
+    "inert": "5"
   },
-  "files":[
+  "files": [
     "LICENSE",
     "README.md",
     "monitor.js",

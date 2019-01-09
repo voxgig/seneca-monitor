@@ -1,5 +1,7 @@
-/* Copyright (c) 2017 Richard Rodger, MIT License */
+/* Copyright (c) 2017-2019 Richard Rodger, MIT License */
 'use strict'
+
+var Util = require('util')
 
 var Lab = require('lab')
 var Code = require('code')
@@ -12,31 +14,32 @@ var expect = Code.expect
 var Seneca = require('seneca')
 
 describe('monitor', function() {
-  it('plugin', function(fin) {
-    Seneca().test(fin).use('..').ready(fin)
+
+  it('plugin', async () => {
+    await Util.promisify(Seneca().test().use('..').ready)()
   })
 
-  it('happy', function(fin) {
+  it('happy', async () => {
     var collect = Seneca({ id$: 'M0', tag: 'm0' })
-      .test(fin)
+      .test()
       .use('..', { collect: true })
 
     var xI = 0
 
     var t0 = Seneca({ id$: 'T0', tag: 't0', version: '1.0.0' })
-      .test(fin)
+      .test()
       .use('..')
       .add('t:3')
       .listen(20000)
 
     var t1 = Seneca({ id$: 'T1', tag: 't0', version: '1.0.0' })
-      .test(fin)
+      .test()
       .use('..')
       .add('t:3')
       .listen(20001)
 
     var s0 = Seneca({ id$: 'S0', tag: 's0', version: '1.0.0' })
-      .test(fin)
+      .test()
       .use('..')
       .add('a:1')
       .add('b:2')
@@ -48,38 +51,41 @@ describe('monitor', function() {
       .client({ pin: 't:3,x:1', port: 20001 })
 
     var c1 = Seneca({ id$: 'C1', tag: 'c1', version: '2.0.0' })
-      .test(fin)
+      .test()
       .use('..')
       .client({ pins: ['a:1', 'b:2', 'c:3'], port: 20100 })
 
     var c2 = Seneca({ id$: 'C2', tag: 'ca', version: '3.0.0' })
-      .test(fin)
+      .test()
       .use('..')
       .client({ pins: ['a:1', 'b:2', 'c:3'], port: 20100 })
 
     var c3 = Seneca({ id$: 'C3', tag: 'ca', version: '3.0.1' })
-      .test(fin)
+      .test()
       .use('..')
       .client({ pins: ['a:1', 'b:2', 'c:3'], port: 20100 })
 
     console.log()
 
-    setTimeout(function() {
-      c1.act('a:1', function() {})
 
-      c2.act('a:1', function() {})
-      c2.act('b:2')
-
-      c3.act('b:2')
-      c3.act('c:3', function() {})
-      c3.act('c:3', function() {})
-
+    await Util.promisify(function(fin) {
       setTimeout(function() {
-        collect.act('role:monitor,get:map', function(err, out) {
-          console.dir(out, { depth: null, colors: true })
-          fin()
-        })
-      }, 100)
-    }, 200)
+        c1.act('a:1', function() {})
+
+        c2.act('a:1', function() {})
+        c2.act('b:2')
+
+        c3.act('b:2')
+        c3.act('c:3', function() {})
+        c3.act('c:3', function() {})
+
+        setTimeout(function() {
+          collect.act('role:monitor,get:map', function(err, out) {
+            console.dir(out, { depth: null, colors: true })
+            fin()
+          })
+        }, 100)
+      }, 200)
+    })()
   })
 })

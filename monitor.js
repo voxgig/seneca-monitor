@@ -1,6 +1,7 @@
-/* Copyright (c) 2017 Richard Rodger and other contributors, MIT License */
+/* Copyright (c) 2017-2019 Richard Rodger and other contributors, MIT License */
 'use strict'
 
+var Util = require('util')
 var Dgram = require('dgram')
 
 var Hapi = require('hapi')
@@ -115,8 +116,7 @@ function make_collector(spec) {
     reply()
   })
 
-  // TODO: should be plugin init
-  make_web(spec, console.log)
+  make_web(spec)
 
   function update(data) {
     var cmd = data[0]
@@ -195,11 +195,11 @@ function make_collector(spec) {
   }
 }
 
-function make_web(spec, done) {
-  var server = new Hapi.Server()
-  server.connection({ port: spec.opts.web.port, host: spec.opts.web.host })
 
-  server.register(Inert)
+async function make_web(spec) {
+  var server = new Hapi.Server({ port: spec.opts.web.port, host: spec.opts.web.host })
+
+  await server.register(Inert)
 
   server.route({
     method: 'GET',
@@ -214,12 +214,12 @@ function make_web(spec, done) {
   server.route({
     method: 'GET',
     path: '/api/map',
-    handler: function(request, reply) {
-      spec.seneca.act('role:monitor,get:map', function(err, out) {
-        reply(err || out || {})
-      })
+    handler: async function(request, h) {
+      return (await Util.promisify(spec.seneca.act).call(spec.seneca, 'role:monitor,get:map')) || {}
     }
   })
 
-  server.start(done)
+  await server.start()
+
+  spec.seneca.log.info({kind:'notice', notice:Util.inspect(server.info)})
 }
