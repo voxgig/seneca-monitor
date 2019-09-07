@@ -4,8 +4,8 @@
 var Util = require('util')
 var Dgram = require('dgram')
 
-var Hapi = require('hapi')
-var Inert = require('inert')
+var Hapi = require('@hapi/hapi')
+var Inert = require('@hapi/inert')
 
 module.exports = function monitor(options) {
   var seneca = this

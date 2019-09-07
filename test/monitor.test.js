@@ -3,8 +3,8 @@
 
 var Util = require('util')
 
-var Lab = require('lab')
-var Code = require('code')
+var Lab = require('@hapi/lab')
+var Code = require('@hapi/code')
 
 var lab = (exports.lab = Lab.script())
 var describe = lab.describe
@@ -16,7 +16,9 @@ var Seneca = require('seneca')
 describe('monitor', function() {
 
   it('plugin', async () => {
-    await Util.promisify(Seneca().test().use('..').ready)()
+    return new Promise((done)=>{
+      Seneca().test().use('..').ready(done)
+    })
   })
 
   it('happy', async () => {
