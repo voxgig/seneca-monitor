@@ -1,6 +1,6 @@
 {
   "name": "seneca-monitor",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "seneca-monitor",
   "main": "monitor.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "clean-npm": "rm -rf node_modules package-lock.json",
     "clean-yarn": "rm -rf node_modules yarn.lock",
     "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
-    "repo-publish": "npm test && npm run repo-tag && npm publish"
+    "repo-publish": "npm test && npm run repo-tag && npm publish --access public --registry=http://registry.npmjs.org"
   },
   "repository": {
     "type": "git",
@@ -34,7 +34,7 @@
     "coveralls": "^3.0.6",
     "prettier": "^1.18.2",
     "seneca": "plugin",
-    "@seneca/repl": "^1.5.0"
+    "@seneca/repl": "^1.5.1"
   },
   "dependencies": {
     "@hapi/hapi": "^18.3.2",
