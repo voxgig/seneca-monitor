@@ -14,10 +14,12 @@ var expect = Code.expect
 var Seneca = require('seneca')
 
 describe('monitor', function() {
-
   it('plugin', async () => {
-    return new Promise((done)=>{
-      Seneca().test().use('..').ready(done)
+    return new Promise(done => {
+      Seneca()
+        .test()
+        .use('..')
+        .ready(done)
     })
   })
 
@@ -68,7 +70,6 @@ describe('monitor', function() {
       .client({ pins: ['a:1', 'b:2', 'c:3'], port: 20100 })
 
     console.log()
-
 
     await Util.promisify(function(fin) {
       setTimeout(function() {

@@ -195,9 +195,11 @@ function make_collector(spec) {
   }
 }
 
-
 async function make_web(spec) {
-  var server = new Hapi.Server({ port: spec.opts.web.port, host: spec.opts.web.host })
+  var server = new Hapi.Server({
+    port: spec.opts.web.port,
+    host: spec.opts.web.host
+  })
 
   await server.register(Inert)
 
@@ -215,11 +217,16 @@ async function make_web(spec) {
     method: 'GET',
     path: '/api/map',
     handler: async function(request, h) {
-      return (await Util.promisify(spec.seneca.act).call(spec.seneca, 'role:monitor,get:map')) || {}
+      return (
+        (await Util.promisify(spec.seneca.act).call(
+          spec.seneca,
+          'role:monitor,get:map'
+        )) || {}
+      )
     }
   })
 
   await server.start()
 
-  spec.seneca.log.info({kind:'notice', notice:Util.inspect(server.info)})
+  spec.seneca.log.info({ kind: 'notice', notice: Util.inspect(server.info) })
 }
