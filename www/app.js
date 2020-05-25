@@ -447,7 +447,7 @@ function build_view(opts) {
     var a = 2*Math.PI
     var t = Math.PI/6
 
-    for (i = 0; i < s; i++) {
+    for (var i = 0; i < s; i++) {
       p.push((x+(Math.sin((a*i/s)-t)*r)) + "," + (y-(Math.cos((a*i/s)-t)*r)))
     }
 
