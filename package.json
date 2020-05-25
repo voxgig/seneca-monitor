@@ -4,7 +4,7 @@
   "description": "seneca-monitor",
   "main": "monitor.js",
   "scripts": {
-    "test": "lab -P test -t 75",
+    "test": "lab -v -P test -t 75 -L -r console -o stdout -r html -o test/coverage.html",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "coverage": "lab -v -P test -L -t 75 -r html > docs/coverage.html",
     "prettier": "prettier --write --no-semi --single-quote monitor.js test/*.js",
@@ -31,15 +31,15 @@
   "homepage": "https://github.com/rjrodger/seneca-monitor#readme",
   "devDependencies": {
     "@hapi/code": "^8.0.1",
-    "@hapi/lab": "^22.0.3",
-    "coveralls": "^3.0.9",
-    "prettier": "^1.19.1",
-    "seneca": "plugin",
-    "@seneca/repl": "^2.2.0"
+    "@hapi/lab": "^22.0.4",
+    "@seneca/repl": "^2.2.0",
+    "coveralls": "^3.1.0",
+    "prettier": "^2.0.5",
+    "seneca": "^3.21.0"
   },
   "dependencies": {
-    "@hapi/hapi": "^18.3.2",
-    "@hapi/inert": "^5.2.1"
+    "@hapi/hapi": "^19.1.1",
+    "@hapi/inert": "^6.0.1"
   },
   "files": [
     "LICENSE",

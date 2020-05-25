@@ -4,9 +4,10 @@ module.exports = {
     node: true
   },
   "parserOptions": {
-    "ecmaVersion": 6
+    "ecmaVersion": 8
   },
   rules: {
-    'no-console': 0
+    'no-console': 0,
+    'no-unused-vars': [2,{args:'none'}]
   }
 }

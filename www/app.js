@@ -19,9 +19,11 @@ var base_instances = {
   links: []
 }
 
-for(var i = 0; i < 0; i++) {
-  base.nodes.push({id:'I'+i, fake:true})
-}
+
+// test nodes
+//for(var i = 0; i < 0; i++) {
+//  base.nodes.push({id:'I'+i, fake:true})
+//}
 
 
 function set_view_mode(mode) {

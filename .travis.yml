@@ -1,15 +1,23 @@
 language: node_js
-sudo: false
+
+env:
+  - SENECA_VER=seneca@3.x.x
+  - SENECA_VER=seneca@plugin
+  - SENECA_VER=senecajs/seneca
 
 node_js:
-  - '8'
   - '10'
   - '12'
   - '13'
+  - '14'
 
-cache:
-  directories:
-      - node_modules
+before_script:
+  - npm uninstall seneca
+  - npm install $SENECA_VER
+
+script:
+  - npm test
+  - npm audit
 
 after_script:
   - npm run coveralls
