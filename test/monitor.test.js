@@ -13,13 +13,10 @@ var expect = Code.expect
 
 var Seneca = require('seneca')
 
-describe('monitor', function() {
+describe('monitor', function () {
   it('plugin', async () => {
-    return new Promise(done => {
-      Seneca()
-        .test()
-        .use('..')
-        .ready(done)
+    return new Promise((done) => {
+      Seneca().test().use('..').ready(done)
     })
   })
 
@@ -47,7 +44,7 @@ describe('monitor', function() {
       .use('..')
       .add('a:1')
       .add('b:2')
-      .add('c:3', function(msg, reply) {
+      .add('c:3', function (msg, reply) {
         this.act('t:3', { x: xI++ % 2 }, reply)
       })
       .listen(20100)
@@ -71,19 +68,19 @@ describe('monitor', function() {
 
     console.log()
 
-    await Util.promisify(function(fin) {
-      setTimeout(function() {
-        c1.act('a:1', function() {})
+    await Util.promisify(function (fin) {
+      setTimeout(function () {
+        c1.act('a:1', function () {})
 
-        c2.act('a:1', function() {})
+        c2.act('a:1', function () {})
         c2.act('b:2')
 
         c3.act('b:2')
-        c3.act('c:3', function() {})
-        c3.act('c:3', function() {})
+        c3.act('c:3', function () {})
+        c3.act('c:3', function () {})
 
-        setTimeout(function() {
-          collect.act('role:monitor,get:map', function(err, out) {
+        setTimeout(function () {
+          collect.act('role:monitor,get:map', function (err, out) {
             console.dir(out, { depth: null, colors: true })
             fin()
           })

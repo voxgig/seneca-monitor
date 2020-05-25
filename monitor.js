@@ -15,13 +15,13 @@ module.exports = function monitor(options) {
       udp: {
         kind: 'udp4',
         port: 10111,
-        host: '0.0.0.0'
+        host: '0.0.0.0',
       },
       web: {
         port: 10181,
         host: '0.0.0.0',
-        folder: __dirname
-      }
+        folder: __dirname,
+      },
     },
     options
   )
@@ -38,7 +38,7 @@ module.exports = function monitor(options) {
 }
 
 function make_monitor(spec) {
-  spec.seneca.on('act-in', function(msg, ignore, meta) {
+  spec.seneca.on('act-in', function (msg, ignore, meta) {
     var m = msg.meta$ || meta
 
     var parents = m.parents || []
@@ -61,18 +61,18 @@ function make_monitor(spec) {
       client[0],
       client[2],
       client[3],
-      client[4]
+      client[4],
     ].join('~')
 
     send(spec, desc)
   })
 
-  spec.seneca.add('role:seneca,cmd:close', function(msg, reply) {
+  spec.seneca.add('role:seneca,cmd:close', function (msg, reply) {
     var seneca = this
 
     send(spec, 'D~' + spec.seneca.id)
-    setTimeout(function() {
-      spec.ds.close(function() {
+    setTimeout(function () {
+      spec.ds.close(function () {
         spec.ds = null
         seneca.prior(msg, reply)
       })
@@ -90,7 +90,7 @@ function send(spec, desc) {
     data.length,
     spec.opts.udp.port,
     spec.opts.udp.host,
-    function(err) {
+    function (err) {
       if (err) spec.seneca.log.warn(err)
     }
   )
@@ -99,7 +99,7 @@ function send(spec, desc) {
 function make_collector(spec) {
   if (!spec.ds) return
 
-  spec.ds.on('message', function(data) {
+  spec.ds.on('message', function (data) {
     update(data.toString().split('~'))
   })
   spec.ds.bind(spec.opts.udp.port, spec.opts.udp.host)
@@ -107,11 +107,11 @@ function make_collector(spec) {
   var map = {}
   spec.map = map
 
-  spec.seneca.add('role:monitor,get:map', function(msg, reply) {
+  spec.seneca.add('role:monitor,get:map', function (msg, reply) {
     reply(map)
   })
 
-  spec.seneca.add('role:monitor,cmd:update', function(msg, reply) {
+  spec.seneca.add('role:monitor,cmd:update', function (msg, reply) {
     update(msg.data || [])
     reply()
   })
@@ -124,20 +124,20 @@ function make_collector(spec) {
     if ('D' == cmd) {
       var did = data[1]
 
-      Object.keys(map).forEach(function(kid) {
+      Object.keys(map).forEach(function (kid) {
         if (kid === did) {
           delete map[did]
           return
         }
-        Object.keys(map[kid].in).forEach(function(pat) {
-          Object.keys(map[kid].in[pat]).forEach(function(mid) {
+        Object.keys(map[kid].in).forEach(function (pat) {
+          Object.keys(map[kid].in[pat]).forEach(function (mid) {
             if (mid === did) {
               delete map[kid].in[pat][did]
             }
           })
         })
-        Object.keys(map[kid].out).forEach(function(pat) {
-          Object.keys(map[kid].out[pat]).forEach(function(mid) {
+        Object.keys(map[kid].out).forEach(function (pat) {
+          Object.keys(map[kid].out[pat]).forEach(function (mid) {
             if (mid === did) {
               delete map[kid].out[pat][did]
             }
@@ -198,7 +198,7 @@ function make_collector(spec) {
 async function make_web(spec) {
   var server = new Hapi.Server({
     port: spec.opts.web.port,
-    host: spec.opts.web.host
+    host: spec.opts.web.host,
   })
 
   await server.register(Inert)
@@ -208,22 +208,22 @@ async function make_web(spec) {
     path: '/{path*}',
     handler: {
       directory: {
-        path: spec.opts.web.folder + '/www'
-      }
-    }
+        path: spec.opts.web.folder + '/www',
+      },
+    },
   })
 
   server.route({
     method: 'GET',
     path: '/api/map',
-    handler: async function(request, h) {
+    handler: async function (request, h) {
       return (
         (await Util.promisify(spec.seneca.act).call(
           spec.seneca,
           'role:monitor,get:map'
         )) || {}
       )
-    }
+    },
   })
 
   await server.start()

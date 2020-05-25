@@ -1,5 +1,5 @@
 module.exports = {
   legacy: {
-    transport: false
-  }
+    transport: false,
+  },
 }
